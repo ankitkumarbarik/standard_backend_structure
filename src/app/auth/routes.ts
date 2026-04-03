@@ -11,4 +11,9 @@ authRouter.post(
     authenticationController.handleSignup.bind(authenticationController),
 );
 
+authRouter.post(
+    "/sign-in",
+    authenticationController.handleSignin.bind(authenticationController),
+);
+
 export default authRouter;

@@ -1,6 +1,7 @@
 import express from "express";
 import type { Router } from "express";
 import AuthenticationController from "./controllers";
+import { restrictToAuthenticatedUser } from "../middlewares/auth-middleware";
 
 const authenticationController = new AuthenticationController();
 
@@ -14,6 +15,12 @@ authRouter.post(
 authRouter.post(
     "/sign-in",
     authenticationController.handleSignin.bind(authenticationController),
+);
+
+authRouter.get(
+    "/me",
+    restrictToAuthenticatedUser(),
+    authenticationController.handleMe.bind(authenticationController),
 );
 
 export default authRouter;

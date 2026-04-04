@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { verifyUserToken } from "../auth/utils/token";
+import { verifyAccessToken } from "../../common/utils/jwt.utils";
 
 export function authenticationMiddleware() {
     return function (req: Request, res: Response, next: NextFunction) {
@@ -17,8 +17,7 @@ export function authenticationMiddleware() {
                 error: "authorization header must start with Bearer and followed by token",
             });
 
-        const user = verifyUserToken(token);
-        // @ts-ignore
+        const user = verifyAccessToken(token);
         req.user = user;
 
         next();
@@ -27,7 +26,6 @@ export function authenticationMiddleware() {
 
 export function restrictToAuthenticatedUser() {
     return function (req: Request, res: Response, next: NextFunction) {
-        // @ts-ignore
         if (!req.user)
             return res.status(401).json({ error: "Authentication Required" });
         return next();

@@ -5,6 +5,9 @@ import { eq } from "drizzle-orm";
 import { generateSalt, hashPassword } from "../../common/utils/hash.utils";
 import ApiError from "../../common/utils/api-error";
 import { generateAccessToken } from "../../common/utils/jwt.utils";
+import fs from "node:fs";
+import ImageKit from "@imagekit/nodejs";
+import imagekit from "../../common/config/image-kit.config";
 
 export class AuthService {
     public async signup(data: SignupDTO) {
@@ -69,5 +72,37 @@ export class AuthService {
         if (!user) throw ApiError.notFound(`user with id ${id} not found`);
 
         return user;
+    }
+
+    public async updateAvatar(data: string, file: Express.Multer.File) {
+        const id = data;
+        const { path } = file;
+
+        const [user] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.id, id));
+        if (!user) throw ApiError.notFound(`user with id ${id} not found`);
+
+        const fileStream = fs.createReadStream(path);
+
+        const params: ImageKit.FileUploadParams = {
+            file: fileStream,
+            fileName: file.filename,
+            folder: "/user-avatars",
+        };
+
+        const response: ImageKit.FileUploadResponse =
+            await imagekit.files.upload(params);
+
+        const [result] = await db
+            .update(usersTable)
+            .set({ avatar: response.url })
+            .where(eq(usersTable.id, id))
+            .returning({ avatar: usersTable.avatar });
+
+        fs.unlinkSync(path);
+
+        return result?.avatar;
     }
 }
